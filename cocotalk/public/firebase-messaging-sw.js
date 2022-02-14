@@ -1,36 +1,47 @@
 /* eslint-disable no-undef */
 // Give the service worker access to Firebase Messaging.
-// Note that you can only use Firebase Messaging here, other Firebase libraries
+// Note that you can only use Firebase Messaging here. Other Firebase libraries
 // are not available in the service worker.
-importScripts("https://www.gstatic.com/firebasejs/7.6.1/firebase-app.js");
-importScripts("https://www.gstatic.com/firebasejs/7.6.1/firebase-messaging.js");
+importScripts("https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js");
+importScripts("https://www.gstatic.com/firebasejs/8.10.0/firebase-messaging.js");
 
-// Initialize the Firebase app in the service worker by passing in the
-// messagingSenderId.
+// Initialize the Firebase app in the service worker by passing in
+// your app's Firebase config object.
+// https://firebase.google.com/docs/web/setup#config-object
 firebase.initializeApp({
   apiKey: "AIzaSyAVvM4t9bfI2HR007WmjEAoT4lmBGfS4LM",
+  authDomain: "cocotalk-1cc7f.firebaseapp.com",
   projectId: "cocotalk-1cc7f",
+  storageBucket: "cocotalk-1cc7f.appspot.com",
   messagingSenderId: "1046572361165",
   appId: "1:1046572361165:web:a27023ed3d8eeabb365084",
+  measurementId: "G-GR9JM30497",
 });
 
-const messaging = firebase.messaging(); //얘 아니면 메시지 안오는듯
-// Background
-// 서버 것이 아니라 테스트용으로 보내면 작동함
-messaging.setBackgroundMessageHandler(function (payload) {
-  console.log("Background", payload);
-  const title = "백그라운드 서비스";
-  let custombody = null;
-  if (payload.data && payload.data.status) custombody = payload.data.status;
-  else custombody = payload.data.message;
-  const options = {
-    // body: payload.data.status,
-    body: custombody,
-  };
-  return self.registration.showNotification("고라니 타이틀/" + title, options); //service worker에서만 돌아가는 코드
-});
+// Retrieve an instance of Firebase Messaging so that it can handle background
+// messages.
+const messaging = firebase.messaging();
+
+// 백그라운드
+// messaging.onBackgroundMessage((payload) => {
+//   console.log("[PUSH] [firebase-messaging-sw.js] Received background message ", payload);
+//   // Customize notification here
+//   if (!(self.Notification && self.Notification.permission === "granted")) {
+//     return;
+//   }
+//   const title = "Background Message Title";
+//   const options = {
+//     body: "text",
+//     icon: "https://cocotalk.s3.ap-northeast-2.amazonaws.com/common/notification.png",
+//   };
+//   self.registration.showNotification(title, options); // 기존 알림에 추가돼서 작성됨, 즉 알림이 두번 울림
+// });
 
 /*
+
+현재 : 커스텀이 안먹어서 백그라운드 일 때만 들어옴 (그것도 크롬만 들어옴)
+
+---------------
 edge로 테스트 했을 때
 포그라운드 -> 알람도 뜨고, 로그도 뜨고 커스텀도 먹음 *완벽 (테스트용 API, 서버 API 둘 다 커스텀 됨)
 
