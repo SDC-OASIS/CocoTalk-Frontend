@@ -18,21 +18,50 @@ firebase.initializeApp({
   measurementId: "G-GR9JM30497",
 });
 
-// Retrieve an instance of Firebase Messaging so that it can handle background
-// messages.
 const messaging = firebase.messaging();
 
-// 백그라운드
-// messaging.onBackgroundMessage((payload) => {
-//   console.log("[PUSH] [firebase-messaging-sw.js] Received background message ", payload);
-//   // Customize notification here
-//   if (!(self.Notification && self.Notification.permission === "granted")) {
-//     return;
-//   }
-//   const title = "Background Message Title";
-//   const options = {
-//     body: "text",
-//     icon: "https://cocotalk.s3.ap-northeast-2.amazonaws.com/common/notification.png",
-//   };
-//   self.registration.showNotification(title, options); // 기존 알림에 추가돼서 작성됨, 즉 알림이 두번 울림
-// });
+// push notification 뮤트 설정
+var isMute = false;
+const muteBroadcast = new BroadcastChannel("mute");
+muteBroadcast.onmessage = (event) => {
+  isMute = event.data.key;
+  console.log("[sevice-worker] isMute", isMute);
+};
+
+// 백그라운드 커스텀
+messaging.onBackgroundMessage((payload) => {
+  console.log("[PUSH] [firebase-messaging-sw.js] Received background message ", payload);
+  if (!isMute) {
+    console.log("백그라운드  알림이 왔습니다. [현재 뮤트 상태] ", isMute);
+    // Customize notification here
+    const title = payload.data.title;
+    const options = {
+      body: payload.data.body,
+      icon: "https://d1fwng7137yw58.cloudfront.net/common/notification.png",
+    };
+    self.registration.showNotification(title, options); // 새로운 알림이 작성됨, 즉 알림이 두번 울림
+  }
+});
+
+// notification 클릭 이벤트
+self.addEventListener("notificationclick", function (event) {
+  console.log("On notification click: ", event.notification.tag);
+  event.notification.close();
+  console.log("click event", event.notification);
+  // This looks to see if the current is already open and
+  // focuses if it is
+  event.waitUntil(
+    clients
+      .matchAll({
+        type: "window",
+      })
+      .then(function (clientList) {
+        for (var i = 0; i < clientList.length; i++) {
+          var client = clientList[i];
+          // TODO: 나중에 배포 주소로 바꿀 것
+          if (client.url.includes("http://localhost:8080")) return client.focus();
+        }
+        if (clients.openWindow) return clients.openWindow("/");
+      }),
+  );
+});
