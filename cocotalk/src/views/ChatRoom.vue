@@ -125,7 +125,7 @@ export default {
     ...mapState("chat", ["roomStatus", "friends", "chattings", "chatInfo", "newRoomInfo"]),
     ...mapState("userStore", ["userInfo"]),
     ...mapState("modal", ["roomNameEditModal"]),
-    ...mapState("socket", ["stompChatRoomClient", "stompChatRoomConnected", "createChatRoomStatus", "newPrivateRoomStatus"]),
+    ...mapState("socket", ["stompChatRoomClient", "stompChatRoomConnected", "createChatRoomStatus", "newPrivateRoomStatus", "newPrivateRoomFriendInfo"]),
   },
   watch: {
     // 채팅방을 켜둔상태에서 다른 채팅방으로 이동할 경우
@@ -299,21 +299,50 @@ export default {
     },
     // 메세지 전송 클릭시 소켓이 연결되어 있고 입력한 메세지가 있다면 전송합니다.
     send() {
-      if (this.stompChatRoomClient && this.stompChatRoomClient.connected && this.message) {
-        const msg = {
-          type: 0,
-          content: this.message,
-          roomId: this.roomStatus.roomId,
-          roomType: this.roomInfo.type,
-          roomname: this.roomInfo.roomname,
-          userId: this.userInfo.id,
-          username: this.userInfo.username,
-          receiverIds: this.roomMemberIds,
-          messageBundleId: this.chatInfo.nextMessageBundleId,
-        };
-        this.stompChatRoomClient.send(`/simple/chatroom/${this.roomStatus.roomId}/message/send`, JSON.stringify(msg));
+      if (this.newPrivateRoomStatus) {
+        this.senToCreatePrivateRoom();
+      } else {
+        if (this.stompChatRoomClient && this.stompChatRoomClient.connected && this.message) {
+          const msg = {
+            type: 0,
+            content: this.message,
+            roomId: this.roomStatus.roomId,
+            roomType: this.roomInfo.type,
+            roomname: this.roomInfo.roomname,
+            userId: this.userInfo.id,
+            username: this.userInfo.username,
+            receiverIds: this.roomMemberIds,
+            messageBundleId: this.chatInfo.nextMessageBundleId,
+          };
+          this.stompChatRoomClient.send(`/simple/chatroom/${this.roomStatus.roomId}/message/send`, JSON.stringify(msg));
+        }
+        this.message = "";
       }
-      this.message = "";
+    },
+    senToCreatePrivateRoom() {
+      console.log("개인톡방생성 버튼 클릭");
+      let members = [];
+      let member = {
+        userId: this.newPrivateRoomFriendInfo.friend.id,
+        username: this.newPrivateRoomFriendInfo.friend.username,
+        profile: JSON.stringify(this.newPrivateRoomFriendInfo.friend.profile),
+      };
+      members.push(member);
+
+      let userInfo = {
+        userId: this.userInfo.id,
+        username: this.userInfo.username,
+        profile: JSON.stringify(this.userInfo.profile),
+      };
+      members.push(userInfo);
+      const payload = {
+        roomname: this.newPrivateRoomFriendInfo.friend.username,
+        img: this.newPrivateRoomFriendInfo.friend.profile.profile,
+        type: 0,
+        members: members,
+      };
+      console.log(payload);
+      this.$store.dispatch("socket/createPrivateChat", payload, { root: true });
     },
     // 처음 방이 생성된 경우 자동으로 초대메세지를 전송합니다.
     sendInviteMessage() {
@@ -345,6 +374,11 @@ export default {
     },
     newPrivateRoom() {
       console.log("개인톡방 오픈~~~");
+      console.log(this.newPrivateRoomFriendInfo);
+      const roomInfo = {
+        roomname: this.newPrivateRoomFriendInfo.friend.username,
+      };
+      this.roomInfo = roomInfo;
       // this.setNewPrivateRoomStatus(false);
     },
 

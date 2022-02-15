@@ -15,6 +15,7 @@ const socket = {
     stompChatRoomConnected: false,
     createChatRoomStatus: false,
     newPrivateRoomStatus: false,
+    newPrivateRoomFriendInfo: {},
   },
   mutations: {
     setStompChatListClient(state, stompChatListClient) {
@@ -37,6 +38,9 @@ const socket = {
     },
     setNewPrivateRoomStatus(state, payload) {
       state.newPrivateRoomStatus = payload;
+    },
+    setNewPrivateRoomFriendInfo(state, payload) {
+      state.newPrivateRoomFriendInfo = payload;
     },
   },
   actions: {
@@ -78,6 +82,7 @@ const socket = {
           console.log("방있지룽");
         } else {
           console.log("방없어융");
+          context.commit("setNewPrivateRoomFriendInfo", friend);
           context.commit("setNewPrivateRoomStatus", true);
           router.push({ name: store.getters["chat/roomStatus"].mainPage + "Chat", params: { chat: "chat", roomId: "private" } }).catch(() => {});
         }
@@ -92,6 +97,15 @@ const socket = {
         // context.commit("GET_FRIENDS", friends);
         // console.log(friends);
       });
+    },
+    createPrivateChat(context, data) {
+      console.log("개인톡방생성");
+      context.state.stompChatListClient.send("/simple/chatroom/new", JSON.stringify(data), (res) => {
+        console.log("생성결과");
+        console.log(res);
+      });
+      // store.dispatch("modal/closeRoomNameEditModal"); 아마 프로필모달닫기?
+      context.commit("setCreateChatRoomStatus", true);
     },
   },
   modules: {},
