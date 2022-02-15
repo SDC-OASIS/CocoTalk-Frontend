@@ -167,6 +167,9 @@ export default {
                 e.profile = JSON.parse(e.profile);
               }
             });
+            if (e.room.id == this.roomStatus.roomId) {
+              e.unreadNumber = 0;
+            }
           });
           this.chats = chatList;
         }

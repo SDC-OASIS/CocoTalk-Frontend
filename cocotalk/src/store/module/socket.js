@@ -36,7 +36,7 @@ const socket = {
       state.createChatRoomStatus = payload;
     },
     setNewPrivateRoomStatus(state, payload) {
-      state.createChatRoomStatus = payload;
+      state.newPrivateRoomStatus = payload;
     },
   },
   actions: {

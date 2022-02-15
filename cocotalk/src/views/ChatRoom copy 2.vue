@@ -111,11 +111,25 @@ export default {
       },
       { root: true },
     );
+
+    // //개인톡방 생성창이 아니면
+    // if (!this.newPrivateRoomStatus) {
+    //   this.chatRoomConnect();
+    //   //그 중 단톡방 생성창이 아니면
+    //   if (!this.createChatRoomStatus) {
+    //     this.getChat();
+    //   }
+    // } else {
+    //   console.log("============[개인톡방생성페이지]=============");
+    //   this.newPrivateRoom();
+    // }
+
     if (this.newPrivateRoomStatus) {
       console.log("============[개인톡방생성페이지]=============");
+
       this.newPrivateRoom();
     } else {
-      this.chatRoomConnect();
+      this.chatRoomConnect;
       if (!this.createChatRoomStatus) {
         this.getChat();
       }
@@ -131,10 +145,8 @@ export default {
     // 채팅방을 켜둔상태에서 다른 채팅방으로 이동할 경우
     "$route.params.roomId": function () {
       // 이전 채팅방 disconnect
-      if (!this.newPrivateRoomStatus) {
-        const headers = { action: "leave" };
-        this.stompChatRoomClient.disconnect(() => {}, headers);
-      }
+      const headers = { action: "leave" };
+      this.stompChatRoomClient.disconnect(() => {}, headers);
       // vuex에 이동한 url저장
       this.$store.dispatch(
         "chat/changePage",
@@ -145,14 +157,18 @@ export default {
         },
         { root: true },
       );
-      this.moreMessages = 0; //채팅방 히스트로리 불러올 때 = true
+      this.moreMessages = 0; //채팅방 히스트로릴 불러올 때 = true
       this.chatMessages = [];
-      if (this.roomStatus.roomId == "private") {
+      //개인톡방 생성창이 아니면
+      if (!this.newPrivateRoomStatus) {
+        this.chatRoomConnect();
+        //그 중 단톡방 생성창이 아니면
+        if (!this.createChatRoomStatus) {
+          this.getChat();
+        }
+      } else {
         console.log("============[개인톡방생성페이지]=============");
         this.newPrivateRoom();
-      } else {
-        this.chatRoomConnect();
-        this.getChat();
       }
       // 스크롤 최하단으로 이동
       this.$nextTick(() => {
@@ -345,7 +361,7 @@ export default {
     },
     newPrivateRoom() {
       console.log("개인톡방 오픈~~~");
-      // this.setNewPrivateRoomStatus(false);
+      this.setNewPrivateRoomStatus(false);
     },
 
     openProfileModal(userProfileInfo) {
@@ -358,10 +374,10 @@ export default {
       sidebar.style.right = "0px";
     },
     exitChat() {
-      if (!this.newPrivateRoomStatus) {
-        const headers = { action: "leave" };
-        this.stompChatRoomClient.disconnect(() => {}, headers);
-      }
+      const headers = {
+        action: "leave",
+      };
+      this.stompChatRoomClient.disconnect(() => {}, headers);
       this.$store.dispatch("chat/changePage", { mainPage: this.roomStatus.mainPage, chat: "chat", roomId: false }, { root: true });
     },
 
