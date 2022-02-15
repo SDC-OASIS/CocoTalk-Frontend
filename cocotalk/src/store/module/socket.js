@@ -2,6 +2,8 @@ import createPersistedState from "vuex-persistedstate";
 import Stomp from "webstomp-client";
 import SockJS from "sockjs-client";
 import store from "@/store";
+import axios from "@/utils/axios";
+import router from "../../router";
 
 const socket = {
   plugins: [createPersistedState()],
@@ -12,6 +14,7 @@ const socket = {
     stompChatRoomClient: null,
     stompChatRoomConnected: false,
     createChatRoomStatus: false,
+    newPrivateRoomStatus: false,
   },
   mutations: {
     setStompChatListClient(state, stompChatListClient) {
@@ -30,6 +33,9 @@ const socket = {
       state.stompChatListConnected = false;
     },
     setCreateChatRoomStatus(state, payload) {
+      state.createChatRoomStatus = payload;
+    },
+    setNewPrivateRoomStatus(state, payload) {
       state.createChatRoomStatus = payload;
     },
   },
@@ -59,9 +65,33 @@ const socket = {
         console.log("생성결과");
         console.log(res);
       });
-      // store.actions["modal/closeRoomNameEditModal"];
       store.dispatch("modal/closeRoomNameEditModal");
       context.commit("setCreateChatRoomStatus", true);
+    },
+    startPrivateChat(context, friend) {
+      console.log("개인톡방 체크");
+      console.log(friend);
+      axios.get(`chat/rooms/private/${friend.friend.id}`).then((res) => {
+        console.log("개인톡방 있나요?");
+        console.log(res);
+        if (res.data.data.id) {
+          console.log("방있지룽");
+        } else {
+          console.log("방없어융");
+          context.commit("setNewPrivateRoomStatus", true);
+          router.push({ name: store.getters["chat/roomStatus"].mainPage + "Chat", params: { chat: "chat", roomId: "private" } }).catch(() => {});
+        }
+        // let friends = res.data.data;
+        // // 친구가 1명이라도 존재하는 경우 STRING jSON 파싱
+        // if (friends.length) {
+        //   friends.forEach((e) => {
+        //     e.friend.profile = JSON.parse(e.friend.profile);
+        //     console.log("친구프로필데이터 파싱완료");
+        //   });
+        // }
+        // context.commit("GET_FRIENDS", friends);
+        // console.log(friends);
+      });
     },
   },
   modules: {},

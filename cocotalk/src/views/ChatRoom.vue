@@ -111,16 +111,35 @@ export default {
       },
       { root: true },
     );
-    this.chatRoomConnect();
-    if (!this.createChatRoomStatus) {
-      this.getChat();
+
+    // //개인톡방 생성창이 아니면
+    // if (!this.newPrivateRoomStatus) {
+    //   this.chatRoomConnect();
+    //   //그 중 단톡방 생성창이 아니면
+    //   if (!this.createChatRoomStatus) {
+    //     this.getChat();
+    //   }
+    // } else {
+    //   console.log("============[개인톡방생성페이지]=============");
+    //   this.newPrivateRoom();
+    // }
+
+    if (this.newPrivateRoomStatus) {
+      console.log("============[개인톡방생성페이지]=============");
+
+      this.newPrivateRoom();
+    } else {
+      this.chatRoomConnect;
+      if (!this.createChatRoomStatus) {
+        this.getChat();
+      }
     }
   },
   computed: {
     ...mapState("chat", ["roomStatus", "friends", "chattings", "chatInfo", "newRoomInfo"]),
     ...mapState("userStore", ["userInfo"]),
     ...mapState("modal", ["roomNameEditModal"]),
-    ...mapState("socket", ["stompChatRoomClient", "stompChatRoomConnected", "createChatRoomStatus"]),
+    ...mapState("socket", ["stompChatRoomClient", "stompChatRoomConnected", "createChatRoomStatus", "newPrivateRoomStatus"]),
   },
   watch: {
     // 채팅방을 켜둔상태에서 다른 채팅방으로 이동할 경우
@@ -140,8 +159,17 @@ export default {
       );
       this.moreMessages = 0; //채팅방 히스트로릴 불러올 때 = true
       this.chatMessages = [];
-      this.getChat();
-      this.chatRoomConnect();
+      //개인톡방 생성창이 아니면
+      if (!this.newPrivateRoomStatus) {
+        this.chatRoomConnect();
+        //그 중 단톡방 생성창이 아니면
+        if (!this.createChatRoomStatus) {
+          this.getChat();
+        }
+      } else {
+        console.log("============[개인톡방생성페이지]=============");
+        this.newPrivateRoom();
+      }
       // 스크롤 최하단으로 이동
       this.$nextTick(() => {
         let chatMessages = this.$refs.scrollRef;
@@ -159,7 +187,7 @@ export default {
     },
   },
   methods: {
-    ...mapMutations("socket", ["setStompChatRoomClient", "setStompChatRoomConnected", "setCreateChatRoomStatus"]),
+    ...mapMutations("socket", ["setStompChatRoomClient", "setStompChatRoomConnected", "setCreateChatRoomStatus", "setNewPrivateRoomStatus"]),
 
     // 1.채팅내역 불러오기
     // 1-1. 일반 채팅방 입장
@@ -330,6 +358,10 @@ export default {
         this.stompChatRoomClient.send(`/simple/chatroom/${this.roomStatus.roomId}/message/send`, JSON.stringify(msg));
       }
       this.setCreateChatRoomStatus(false);
+    },
+    newPrivateRoom() {
+      console.log("개인톡방 오픈~~~");
+      this.setNewPrivateRoomStatus(false);
     },
 
     openProfileModal(userProfileInfo) {
