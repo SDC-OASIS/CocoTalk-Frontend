@@ -9,7 +9,7 @@ const chat = {
     roomStatus: {
       chatPage: "chat",
     },
-    chats: [],
+    // chats: [],
     chatInfo: {
       nextMessageBundleId: "",
       recentMessageBundleCount: 0,
@@ -51,9 +51,9 @@ const chat = {
     CHANGE_MAIN_PAGE(state, payload) {
       state.roomStatus.mainPage = payload;
     },
-    SET_CHATLIST(state, payload) {
-      state.chats = payload;
-    },
+    // SET_CHATLIST(state, payload) {
+    //   state.chats = payload;
+    // },
     SET_CONNECTION(state, payload) {
       state.socket.client = payload;
     },

@@ -16,6 +16,7 @@ const socket = {
     createChatRoomStatus: false,
     newPrivateRoomStatus: false,
     newPrivateRoomFriendInfo: {},
+    chats: [],
   },
   mutations: {
     setStompChatListClient(state, stompChatListClient) {
@@ -42,18 +43,136 @@ const socket = {
     setNewPrivateRoomFriendInfo(state, payload) {
       state.newPrivateRoomFriendInfo = payload;
     },
+    setChatList(state, payload) {
+      state.chats = payload;
+    },
+    UPDATE_CHAT_LIST(state, { idx, lastMessage }) {
+      state.chats[idx].recentChatMessage = lastMessage;
+    },
+    ADD_UNREAD_MESSAGES(state, idx) {
+      state.chats[idx].unreadNumber++;
+    },
+    DELETE_UADATED_CHATROOM(state, idx) {
+      state.chats.splice(idx, 1);
+    },
+    ADD_UADATED_CHATROOM(state, updateData) {
+      state.chats.unshift(updateData);
+    },
+    UPADATE_BUNDLE_COUNT(state, { idx, newBundleCount }) {
+      state.chats[idx].recentMessageBundleCount = newBundleCount;
+    },
+    ENTER_CHAT_ROOM(state, idx) {
+      state.chats[idx].unreadNumber = 0;
+    },
+    ADD_NEW_CHAT_ROOM(state, chatRoom) {
+      state.chats.unshift(chatRoom);
+    },
   },
   actions: {
-    chatListConnect(context) {
+    getChatList(context) {
+      axios.get("chat/rooms/list").then((res) => {
+        console.log("채팅방목록 가져오기");
+        const chatList = res.data.data;
+        if (chatList) {
+          chatList.forEach((e) => {
+            e.room.messageBundleIds = e.room.messageBundleIds.slice(1, -1).split(", ");
+            e.room.members.forEach((e) => {
+              if (e.profile) {
+                e.profile = JSON.parse(e.profile);
+              }
+            });
+            if (e.room.id == store.getters["chat/roomStatus"].roomId) {
+              e.unreadNumber = 0;
+            }
+          });
+          context.commit("setChatList", chatList);
+        }
+        console.log(chatList);
+      });
+    },
+    async chatListConnect(context) {
       const serverURL = "http://138.2.93.111:8080/stomp";
       let socket = new SockJS(serverURL);
-      context.commit("setStompChatListClient", Stomp.over(socket));
-      context.state.stompChatListClient.connect(
+      await context.commit("setStompChatListClient", Stomp.over(socket));
+      await context.state.stompChatListClient.connect(
         { view: "chatList", userId: store.getters["userStore/userInfo"].id },
         (frame) => {
           this.connected = true;
           context.commit("setStompChatListConnected", true);
           console.log("소켓 연결 성공", frame);
+          //[채팅목록 마지막 메세지 subscribe]
+          context.state.stompChatListClient.subscribe(`/topic/${store.getters["userStore/userInfo"].id}/message`, (res) => {
+            console.log("구독으로 받은 메시지목록의 마지막 메세지 정보 입니다.");
+            const data = JSON.parse(res.body);
+            let lastMessage = data.message;
+            let bundleInfo = data.bundleInfo;
+            console.log(data);
+            const idx = context.state.chats.findIndex(function (item) {
+              return item.room.id == lastMessage.roomId;
+            });
+            // 1.마지막 메세지 갱신
+            context.commit("UPDATE_CHAT_LIST", { idx, lastMessage });
+
+            // 현재 입장한 방이 아니라면 안읽은 메세지수에 더해줌
+            if (context.state.chats[idx].room.id != store.getters["chat/roomStatus"].roomId) {
+              context.commit("ADD_UNREAD_MESSAGES", idx);
+            }
+            // 2.채팅방 목록에 있는 방의 메세지중 최상단이 아닌 경우
+            if (idx) {
+              const updateData = context.state.chats[idx];
+              console.log(updateData);
+              context.commit("DELETE_UADATED_CHATROOM", idx);
+              context.commit("ADD_UADATED_CHATROOM", updateData);
+            }
+            // 채팅방별 최신 메세지의 번들 수 갱신
+            const newBundleCount = bundleInfo.currentMessageBundleCount;
+            context.commit("UPADATE_BUNDLE_COUNT", { idx, newBundleCount });
+            // this.$store.dispatch("chat/updateMessageBundleCount", recentMessageBundleCount, { root: true });
+            console.log(lastMessage);
+            console.log(bundleInfo);
+
+            // 3.채팅방 목록에 없는 방의 메세지인 경우 (나가기한 1대1 채팅) == 구현중 ==
+          });
+
+          //[채팅목록 채팅방정보 채널 subscribe] == 구현중 ==
+          context.state.stompChatListClient.subscribe(`/topic/${store.getters["userStore/userInfo"].id}/room`, (res) => {
+            console.log("구독으로 받은 업데이트된 룸정보입니다.");
+            console.log(res);
+          });
+
+          //[채팅목록 새로 생성된 채팅방정보 채널 subscribe] == 구현중 ==
+          context.state.stompChatListClient.subscribe(`/topic/${store.getters["userStore/userInfo"].id}/room/new`, (res) => {
+            console.log("구독으로 받은 새로 생성된 룸정보입니다.");
+            console.log(JSON.parse(res.body));
+            let newRoom = JSON.parse(res.body);
+
+            newRoom.messageBundleIds = newRoom.messageBundleIds.slice(1, -1).split(", ");
+            newRoom.members.forEach((e) => {
+              if (e.profile) {
+                e.profile = JSON.parse(e.profile);
+              }
+            });
+            console.log(newRoom);
+            let chatRoom = {
+              recentChatMessage: {},
+              recentMessageBundleCount: 0,
+              room: newRoom,
+              unreadNumber: 0,
+            };
+            console.log(context.state.chats);
+            context.commit("ADD_NEW_CHAT_ROOM", chatRoom);
+            console.log("===방생성중[crateChatRoomStatus:" + context.state.createChatRoomStatus + "]===");
+            if (context.state.createChatRoomStatus) {
+              // 새로생성된 채팅방으로 가기
+              let newRoomInfo = {
+                roomId: newRoom.id,
+                nextMessageBundleId: newRoom.messageBundleIds[0],
+                recentMessageBundleCount: null,
+                newRoom: newRoom,
+              };
+              store.dispatch("chat/goNewChat", newRoomInfo, { root: true });
+            }
+          });
         },
         (error) => {
           console.log("소켓 연결 실패", error);
@@ -63,6 +182,22 @@ const socket = {
       );
       console.log(`소켓 연결을 시도합니다. 서버 주소: ${serverURL}`);
     },
+    goChat(context, chat) {
+      // 현재 swagger로 채팅방생성중이기때문에 첫메세지가 없는 경우가 있어 nextMessageBundleId 업데이트.
+      // 채팅방내부에서 채팅내역불러와서 갱신해주기 때문에 이후에는 필요없음
+      let payload = {
+        roomId: chat.room.id,
+        nextMessageBundleId: chat.room.messageBundleIds[chat.room.messageBundleIds.length - 1],
+        recentMessageBundleCount: chat.recentMessageBundleCount,
+      };
+      store.dispatch("chat/goChat", payload, { root: true });
+      const idx = context.state.chats.findIndex(function (item) {
+        return item.room.id == chat.room.id;
+      });
+      // 읽지 않은 메세지수 0으로 만들기
+      context.commit("ENTER_CHAT_ROOM", idx);
+    },
+
     createChat(context, data) {
       console.log("채팅방생성");
       context.state.stompChatListClient.send("/simple/chatroom/new", JSON.stringify(data), (res) => {

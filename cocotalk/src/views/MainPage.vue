@@ -45,6 +45,7 @@ export default {
   created() {
     this.setStompChatListDisconnect();
     this.$store.dispatch("socket/chatListConnect");
+    this.$store.dispatch("socket/getChatList");
     // 에러페이지에서는 navbar 안보이게 만들기
     if (window.location.pathname == "/error") {
       this.nav = false;

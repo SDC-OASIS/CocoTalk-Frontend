@@ -147,12 +147,14 @@ export default {
       );
       this.moreMessages = 0; //채팅방 히스트로리 불러올 때 = true
       this.chatMessages = [];
-      if (this.roomStatus.roomId == "private") {
+      if (this.newPrivateRoomStatus) {
         console.log("============[개인톡방생성페이지]=============");
         this.newPrivateRoom();
       } else {
         this.chatRoomConnect();
-        this.getChat();
+        if (!this.createChatRoomStatus) {
+          this.getChat();
+        }
       }
       // 스크롤 최하단으로 이동
       this.$nextTick(() => {
@@ -250,6 +252,7 @@ export default {
           if (this.createChatRoomStatus) {
             this.getNewChat();
           }
+          this.setStompChatRoomConnected(true);
           // 채팅 메세지 채널 subscribe
           this.stompChatRoomClient.subscribe(`/topic/${this.roomStatus.roomId}/message`, (res) => {
             console.log("구독으로 받은 메시지 입니다.");
@@ -300,7 +303,7 @@ export default {
     // 메세지 전송 클릭시 소켓이 연결되어 있고 입력한 메세지가 있다면 전송합니다.
     send() {
       if (this.newPrivateRoomStatus) {
-        this.senToCreatePrivateRoom();
+        this.sendToCreatePrivateRoom();
       } else {
         if (this.stompChatRoomClient && this.stompChatRoomClient.connected && this.message) {
           const msg = {
@@ -319,7 +322,7 @@ export default {
         this.message = "";
       }
     },
-    senToCreatePrivateRoom() {
+    sendToCreatePrivateRoom() {
       console.log("개인톡방생성 버튼 클릭");
       let members = [];
       let member = {
