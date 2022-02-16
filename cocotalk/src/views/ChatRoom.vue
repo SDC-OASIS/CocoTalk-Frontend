@@ -8,7 +8,7 @@
         </div>
         <span class="bold" style="font-size: 18px">999+</span>
       </div>
-      <span class="bold" style="font-size: 18px">{{ this.roomInfo.roomname }}</span>
+      <span class="bold chat-room-title" style="font-size: 18px">{{ this.roomInfo.roomname }}</span>
       <div class="box">
         <span>
           <span class="iconify" data-icon="ant-design:search-outlined" style="cursor: pointer; color: black; padding-right: 10px"></span>
@@ -34,7 +34,7 @@
                 <div class="row">
                   <div class="bubble box">{{ chatMessage.content }}</div>
                   <div style="position: relative; width: 70px">
-                    <div class="unread-number">2</div>
+                    <div class="unread-number">{{ unreadMemberCnt(chatMessage.sentAt) }}</div>
                     <div class="sent-time">오후2:00</div>
                   </div>
                 </div>
@@ -45,7 +45,7 @@
               <div class="chat-message">
                 <div class="row">
                   <div style="position: relative; width: 55px">
-                    <div class="unread-number-me">2</div>
+                    <div class="unread-number-me">{{ unreadMemberCnt(chatMessage.sentAt) }}</div>
                     <div class="sent-time-me">오후2:00</div>
                   </div>
                   <div class="bubble-me box">{{ chatMessage.content }}</div>
@@ -239,6 +239,21 @@ export default {
       });
       return this.roomInfo.members[idx];
     },
+    unreadMemberCnt(sentAt) {
+      console.log("=======카톡안읽은 사람 숫자 연산 =========");
+      let cnt = this.roomInfo.members.length;
+      this.roomInfo.members.forEach((e) => {
+        // 현재접속중인 사람은 읽음
+        if (e.enteredAt > e.awayAt) {
+          cnt = cnt - 1;
+        }
+        // 미접속자중 메세지가 온때보다 늦게나간 사람은 읽음
+        else if (e.awayAt > sentAt) {
+          cnt = cnt - 1;
+        }
+      });
+      return cnt;
+    },
 
     // 3.채팅방 소켓 연결
     chatRoomConnect: function () {
@@ -283,7 +298,7 @@ export default {
                 e.profile = JSON.parse(e.profile);
               }
             });
-            console.log(this.roomInfo);
+            console.log(this.roomInfo.members);
           });
           // 채팅방 초대 - 이전의 Join과 다름. 좀 더 생각해보기
           // const msg = {
@@ -458,7 +473,8 @@ export default {
         })
         .then((res) => {
           // 메세지목록에 추가 + 스크롤 기존 위치 지정
-          if (res.data.data.length) {
+          // 최상단 도착시 추가안되도록 막음
+          if (res.data.data.length && res.data.data[0].id != this.chatMessages[0].id) {
             this.chatMessages.unshift(...res.data.data);
             this.$nextTick(() => {
               let chatMessages = this.$refs.scrollRef;
@@ -508,6 +524,14 @@ export default {
   .chat-messages-container {
     height: 70vh;
   }
+}
+.chat-room-title {
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+  width: 300px;
+
+  padding-top: 0px;
 }
 .chat-messages-outer-container::-webkit-scrollbar {
   position: absolute;
@@ -567,6 +591,7 @@ export default {
   left: 1px;
   width: 70px;
   height: 15px;
+  font-weight: bold;
 }
 .unread-number-me {
   color: #749f58;
@@ -576,6 +601,7 @@ export default {
   right: 1px;
   width: 12px;
   height: 15px;
+  font-weight: bold;
 }
 .sent-time {
   position: absolute;

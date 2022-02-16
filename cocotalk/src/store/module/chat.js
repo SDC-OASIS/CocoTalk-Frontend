@@ -90,12 +90,6 @@ const chat = {
         await router.push({ name: "chatsChat", params: { chat: "chat", roomId: payload.roomId } }).catch(() => {});
       }
     },
-    // createChat(context, payload) {
-    //   axios.post("chat/rooms", payload).then((res) => {
-    //     console.log("채팅방생성");
-    //     console.log(res);
-    //   });
-    // },
     updateMessageBundleId(context, payload) {
       context.commit("UPDATE_MESSAGE_BUNDLE_ID", payload);
     },

@@ -151,9 +151,7 @@ const socket = {
           //[채팅목록 새로 생성된 채팅방정보 채널 subscribe] == 구현중 ==
           context.state.stompChatListClient.subscribe(`/topic/${store.getters["userStore/userInfo"].id}/room/new`, (res) => {
             console.log("구독으로 받은 새로 생성된 룸정보입니다.");
-            console.log(JSON.parse(res.body));
             let newRoom = JSON.parse(res.body);
-
             newRoom.messageBundleIds = newRoom.messageBundleIds.slice(1, -1).split(", ");
             newRoom.members.forEach((e) => {
               if (e.profile) {
@@ -208,39 +206,25 @@ const socket = {
 
     createChat(context, data) {
       console.log("채팅방생성");
-      context.state.stompChatListClient.send("/simple/chatroom/new", JSON.stringify(data), (res) => {
-        console.log("생성결과");
-        console.log(res);
-      });
+      context.state.stompChatListClient.send("/simple/chatroom/new", JSON.stringify(data));
       store.dispatch("modal/closeRoomNameEditModal");
       context.commit("setCreateChatRoomStatus", true);
     },
     startPrivateChat(context, friend) {
       console.log("개인톡방 체크");
-      console.log(friend);
       axios.get(`chat/rooms/private/${friend.friend.id}`).then((res) => {
         console.log("개인톡방 있나요?");
         console.log(res);
         if (res.data.data.id) {
-          console.log("방있지룽");
+          console.log("방있어요");
           console.log(res.data.data.id);
           router.push({ name: store.getters["chat/roomStatus"].mainPage + "Chat", params: { chat: "chat", roomId: res.data.data.id } }).catch(() => {});
         } else {
-          console.log("방없어융");
+          console.log("방없어요");
           context.commit("setNewPrivateRoomFriendInfo", friend);
           context.commit("setNewPrivateRoomStatus", true);
           router.push({ name: store.getters["chat/roomStatus"].mainPage + "Chat", params: { chat: "chat", roomId: "private" } }).catch(() => {});
         }
-        // let friends = res.data.data;
-        // // 친구가 1명이라도 존재하는 경우 STRING jSON 파싱
-        // if (friends.length) {
-        //   friends.forEach((e) => {
-        //     e.friend.profile = JSON.parse(e.friend.profile);
-        //     console.log("친구프로필데이터 파싱완료");
-        //   });
-        // }
-        // context.commit("GET_FRIENDS", friends);
-        // console.log(friends);
       });
     },
     createPrivateChat(context, data) {
