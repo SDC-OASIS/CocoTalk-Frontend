@@ -19,7 +19,7 @@
         <div class="modal-profile-chat" style="display: inline-block; margin: 0 20px">
           <div style="display: inline-block; margin: 0 20px">
             <i class="chat fas fa-comment"></i>
-            <div @click="startChat" style="font-size: 13px">1:1 채팅</div>
+            <div @click="startPrivateChat" style="font-size: 13px">1:1 채팅</div>
           </div>
           <div v-if="userProfileInfo.id == userInfo.id" style="display: inline-block; font-size: 20px; margin: 0 20px">
             <i class="fas fa-pen" style="margin: 10px 0"></i>
@@ -72,8 +72,10 @@ export default {
     closeFullImg() {
       this.fullImg.status = false;
     },
-    startChat() {
-      this.$store.dispatch("socket/createChat", this.userProfileInfo, { root: true });
+    startPrivateChat(friend) {
+      console.log("프로필에서 클릭해 1대1채팅열기");
+      console.log(friend);
+      this.$store.dispatch("socket/startPrivateChat", friend, { root: true });
     },
   },
   created() {

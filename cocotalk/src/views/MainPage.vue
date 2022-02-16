@@ -54,7 +54,7 @@ export default {
   computed: {
     ...mapState("chat", ["friends", "roomStatus"]),
     ...mapState("userStore", ["screenInfo", "userInfo"]),
-    ...mapState("socket", ["stompChatListConnected"]),
+    ...mapState("socket", ["stompChatListClient", "stompChatListConnected"]),
     ...mapState("modal", ["alert", "addFriendModal", "profileModal", "ChatCreationModal", "roomNameEditModal"]),
   },
   methods: {

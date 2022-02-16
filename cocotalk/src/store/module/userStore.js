@@ -101,6 +101,10 @@ const userStore = {
       context.commit("CLEAR_ISLOGIN");
       context.commit("GO_LOGINPAGE");
       store.dispatch("chat/clearPage");
+      // const headers = { action: "leave" };
+      // this.stompChatListClient.disconnect(() => {}, headers);
+      const headers = { action: "leave" };
+      store.state.socket.stompChatListClient.disconnect(() => {}, headers);
     },
     getUser: function (context) {
       axios.get("user/profile/token").then((res) => {

@@ -223,6 +223,8 @@ const socket = {
         console.log(res);
         if (res.data.data.id) {
           console.log("방있지룽");
+          console.log(res.data.data.id);
+          router.push({ name: store.getters["chat/roomStatus"].mainPage + "Chat", params: { chat: "chat", roomId: res.data.data.id } }).catch(() => {});
         } else {
           console.log("방없어융");
           context.commit("setNewPrivateRoomFriendInfo", friend);
