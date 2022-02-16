@@ -16,6 +16,7 @@ const socket = {
     createChatRoomStatus: false,
     newPrivateRoomStatus: false,
     newPrivateRoomFriendInfo: {},
+    triggerMessage: null,
     chats: [],
   },
   mutations: {
@@ -66,6 +67,13 @@ const socket = {
     },
     ADD_NEW_CHAT_ROOM(state, chatRoom) {
       state.chats.unshift(chatRoom);
+    },
+    SET_TRIGGER_MASSAGE(state, msg) {
+      state.triggerMessage = msg;
+    },
+    CLEAR_NEW_PRIVATE_ROOM(state) {
+      state.triggerMessage = null;
+      state.newPrivateRoomStatus = false;
     },
   },
   actions: {
@@ -162,7 +170,7 @@ const socket = {
             console.log(context.state.chats);
             context.commit("ADD_NEW_CHAT_ROOM", chatRoom);
             console.log("===방생성중[crateChatRoomStatus:" + context.state.createChatRoomStatus + "]===");
-            if (context.state.createChatRoomStatus) {
+            if (context.state.createChatRoomStatus || context.state.newPrivateRoomStatus) {
               // 새로생성된 채팅방으로 가기
               let newRoomInfo = {
                 roomId: newRoom.id,
@@ -240,7 +248,13 @@ const socket = {
         console.log(res);
       });
       // store.dispatch("modal/closeRoomNameEditModal"); 아마 프로필모달닫기?
-      context.commit("setCreateChatRoomStatus", true);
+      context.commit("setNewPrivateRoomStatus", true);
+    },
+    setTriggerMessage(context, msg) {
+      context.commit("SET_TRIGGER_MASSAGE", msg);
+    },
+    clearNewPrivateRoom(context) {
+      context.commit("CLEAR_NEW_PRIVATE_ROOM");
     },
   },
   modules: {},

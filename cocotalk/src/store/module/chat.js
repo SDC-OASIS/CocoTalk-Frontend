@@ -1,6 +1,7 @@
 import createPersistedState from "vuex-persistedstate";
 // import axios from "../../utils/axios";
 import router from "../../router";
+import store from "@/store";
 
 const chat = {
   namespaced: true,
@@ -106,7 +107,7 @@ const chat = {
       console.log("새로운 채팅방 오픈");
       context.commit("GO_CHAT", newRoomInfo);
       context.commit("NEW_ROOM_INFO", newRoomInfo.newRoom);
-      router.push({ name: "chatsChat", params: { chat: "chat", roomId: newRoomInfo.roomId } }).catch(() => {});
+      router.push({ name: store.getters["chat/roomStatus"].mainPage + "Chat", params: { chat: "chat", roomId: newRoomInfo.roomId } }).catch(() => {});
     },
   },
   modules: {},
