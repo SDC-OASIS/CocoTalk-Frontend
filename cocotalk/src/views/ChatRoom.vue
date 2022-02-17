@@ -323,7 +323,7 @@ export default {
           });
           // 채팅 메세지 룸정보 업데이트 채널 subscribe
           this.stompChatRoomClient.subscribe(`/topic/${this.roomStatus.roomId}/room`, (res) => {
-            console.log("구독으로 받은 채팅방 정보입니다.");
+            console.log("구독으로 받은 채팅방 정보입니다dd.");
             this.roomInfo = JSON.parse(res.body);
             this.roomInfo.members.forEach((e) => {
               this.roomMemberIds = [];
