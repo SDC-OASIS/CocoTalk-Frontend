@@ -1,5 +1,5 @@
 <template>
-  <div class="chat">
+  <div v-if="this.stompChatRoomConnected" class="chat">
     <!-- 채팅방 Header -->
     <div class="chat-header row align-center">
       <div class="row align-center">
@@ -115,6 +115,7 @@ export default {
       console.log("============[개인톡방생성페이지]=============");
       this.newPrivateRoom();
     } else {
+      console.log("=====커넥션을 시작합니다=====");
       this.chatRoomConnect();
       if (!this.createChatRoomStatus && !this.triggerMessage) {
         this.getChat();
@@ -149,6 +150,7 @@ export default {
       // 이전 채팅방 disconnect
       if (!this.newPrivateRoomStatus) {
         const headers = { action: "leave" };
+        console.log("이전 방 나가기");
         this.stompChatRoomClient.disconnect(() => {}, headers);
       }
       // vuex에 이동한 url저장
@@ -167,11 +169,8 @@ export default {
         console.log("============[개인톡방생성페이지]=============");
         this.newPrivateRoom();
       } else {
-        console.log("!!!!!!");
+        console.log("=====커넥션을 시작합니다=====");
         this.chatRoomConnect();
-        if (!this.createChatRoomStatus && !this.triggerMessage) {
-          this.getChat();
-        }
       }
       // 스크롤 최하단으로 이동
       this.$nextTick(() => {
@@ -291,6 +290,9 @@ export default {
           // 소켓 연결 성공
           this.connected = true;
           console.log("소켓 연결 성공", frame);
+          if (!this.createChatRoomStatus && !this.triggerMessage) {
+            this.getChat();
+          }
           if (this.createChatRoomStatus) {
             this.getNewChat();
           }

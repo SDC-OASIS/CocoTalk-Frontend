@@ -72,10 +72,10 @@ export default {
     closeFullImg() {
       this.fullImg.status = false;
     },
-    startPrivateChat(friend) {
+    startPrivateChat() {
       console.log("프로필에서 클릭해 1대1채팅열기");
-      console.log(friend);
-      this.$store.dispatch("socket/startPrivateChat", friend, { root: true });
+      console.log(this.profileInfo);
+      this.$store.dispatch("socket/startPrivateChat", this.profileInfo, { root: true });
     },
   },
   created() {
