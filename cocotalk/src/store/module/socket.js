@@ -1,9 +1,9 @@
 import createPersistedState from "vuex-persistedstate";
 import Stomp from "webstomp-client";
 import SockJS from "sockjs-client";
-import store from "@/store";
 import axios from "@/utils/axios";
 import router from "../../router";
+import store from "@/store";
 
 const socket = {
   plugins: [createPersistedState()],
@@ -16,6 +16,7 @@ const socket = {
     createChatRoomStatus: false,
     newPrivateRoomStatus: false,
     newPrivateRoomFriendInfo: {},
+    newPrivateRoomRefresh: false,
     triggerMessage: null,
     chats: [],
   },
@@ -75,6 +76,10 @@ const socket = {
       state.triggerMessage = null;
       state.newPrivateRoomStatus = false;
     },
+    setNewPrivateRoomRefresh(state, payload) {
+      console.log("바뀌라고!!!");
+      state.newPrivateRoomRefresh = payload;
+    },
   },
   actions: {
     getChatList(context) {
@@ -120,24 +125,21 @@ const socket = {
             });
             // 1.마지막 메세지 갱신
             context.commit("UPDATE_CHAT_LIST", { idx, lastMessage });
-
-            // 현재 입장한 방이 아니라면 안읽은 메세지수에 더해줌
-            if (context.state.chats[idx].room.id != store.getters["chat/roomStatus"].roomId) {
+            // 현재 입장한 방이 아니고 초대메세지가 아니라면 안읽은 메세지수에 더해줌
+            if (context.state.chats[idx].room.id != store.getters["chat/roomStatus"].roomId && lastMessage.type != 1) {
               context.commit("ADD_UNREAD_MESSAGES", idx);
             }
-            // 2.채팅방 목록에 있는 방의 메세지중 최상단이 아닌 경우
+            // 채팅방 목록 최상단에 있지않은 경우
             if (idx) {
               const updateData = context.state.chats[idx];
               console.log(updateData);
               context.commit("DELETE_UADATED_CHATROOM", idx);
               context.commit("ADD_UADATED_CHATROOM", updateData);
             }
-            // 채팅방별 최신 메세지의 번들 수 갱신
+
+            // 2.채팅방별 최신 메세지의 번들 수 갱신
             const newBundleCount = bundleInfo.currentMessageBundleCount;
             context.commit("UPADATE_BUNDLE_COUNT", { idx, newBundleCount });
-            // this.$store.dispatch("chat/updateMessageBundleCount", recentMessageBundleCount, { root: true });
-            console.log(lastMessage);
-            console.log(bundleInfo);
 
             // 3.채팅방 목록에 없는 방의 메세지인 경우 (나가기한 1대1 채팅) == 구현중 ==
           });
@@ -151,7 +153,9 @@ const socket = {
           //[채팅목록 새로 생성된 채팅방정보 채널 subscribe] == 구현중 ==
           context.state.stompChatListClient.subscribe(`/topic/${store.getters["userStore/userInfo"].id}/room/new`, (res) => {
             console.log("구독으로 받은 새로 생성된 룸정보입니다.");
-            let newRoom = JSON.parse(res.body);
+            let newRoom = JSON.parse(res.body).roomVo;
+            let bundleInfo = JSON.parse(res.body).bundleInfoVo;
+            console.log(newRoom);
             newRoom.messageBundleIds = newRoom.messageBundleIds.slice(1, -1).split(", ");
             newRoom.members.forEach((e) => {
               if (e.profile) {
@@ -161,7 +165,7 @@ const socket = {
             console.log(newRoom);
             let chatRoom = {
               recentChatMessage: {},
-              recentMessageBundleCount: 0,
+              recentMessageBundleCount: bundleInfo.currentMessageBundleCount, //count 값 갱신해주기
               room: newRoom,
               unreadNumber: 0,
             };
@@ -173,9 +177,10 @@ const socket = {
               let newRoomInfo = {
                 roomId: newRoom.id,
                 nextMessageBundleId: newRoom.messageBundleIds[0],
-                recentMessageBundleCount: null,
+                recentMessageBundleCount: bundleInfo.currentMessageBundleCount,
                 newRoom: newRoom,
               };
+              store.dispatch("chat/updateMessageBundleCount", bundleInfo.currentMessageBundleCount, { root: true });
               store.dispatch("chat/goNewChat", newRoomInfo, { root: true });
             }
           });
@@ -212,10 +217,12 @@ const socket = {
     },
     startPrivateChat(context, friend) {
       console.log("개인톡방 체크");
+      // store.dispatch("modal/closeProfileModal");
+
       axios.get(`chat/rooms/private/${friend.friend.id}`).then((res) => {
         console.log("개인톡방 있나요?");
-        console.log(res);
         if (res.data.data.id) {
+          context.commit("setNewPrivateRoomStatus", false);
           console.log("방있어요");
           console.log(res.data.data.id);
           router.push({ name: store.getters["chat/roomStatus"].mainPage + "Chat", params: { chat: "chat", roomId: res.data.data.id } }).catch(() => {});

@@ -32,6 +32,11 @@ const routes = [
           left: FriendList,
           right: BeforeEnterChat,
         },
+        beforeEnter: (to, from, next) => {
+          store.dispatch("userStore/getUser");
+          store.dispatch("friend/getFriends");
+          next();
+        },
       },
       {
         path: "/chats",

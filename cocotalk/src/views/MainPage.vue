@@ -52,13 +52,11 @@ export default {
     }
   },
   computed: {
-    ...mapState("chat", ["friends", "roomStatus"]),
-    ...mapState("userStore", ["screenInfo", "userInfo"]),
-    ...mapState("socket", ["stompChatListClient", "stompChatListConnected"]),
+    ...mapState("socket", ["stompChatListConnected"]),
     ...mapState("modal", ["alert", "addFriendModal", "profileModal", "ChatCreationModal", "roomNameEditModal"]),
   },
   methods: {
-    ...mapMutations("socket", ["setStompChatListClient", "setStompChatListConnected", "setStompChatListDisconnect"]),
+    ...mapMutations("socket", ["setStompChatListConnected", "setStompChatListDisconnect"]),
   },
 };
 </script>

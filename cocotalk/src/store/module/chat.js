@@ -101,6 +101,7 @@ const chat = {
       console.log("새로운 채팅방 오픈");
       context.commit("GO_CHAT", newRoomInfo);
       context.commit("NEW_ROOM_INFO", newRoomInfo.newRoom);
+      // store.dispatch("socket/clearNewPrivateRoom");
       router.push({ name: store.getters["chat/roomStatus"].mainPage + "Chat", params: { chat: "chat", roomId: newRoomInfo.roomId } }).catch(() => {});
     },
   },
