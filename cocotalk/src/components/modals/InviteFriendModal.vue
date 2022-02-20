@@ -105,7 +105,7 @@ export default {
       this.$store.dispatch("socket/inviteFriend", this.selectedFriends, { root: true });
       console.log("확인");
       this.$store.dispatch("modal/setSidebar", false, { root: true });
-      this.$store.dispatch("modal/setSidebar", true, { root: true });
+      // this.$store.dispatch("modal/setSidebar", true, { root: true });
       this.$store.dispatch("modal/closeInviteFriendModal");
     },
     // 개인 톡방에서 초대시 단톡 생성

@@ -142,6 +142,6 @@ ul.nav a {
 }
 ul.nav a:hover {
   background: #42652b;
-  height: 25px;
+  height: 30px;
 }
 </style>

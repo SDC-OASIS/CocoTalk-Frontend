@@ -728,11 +728,11 @@ export default {
   overflow: auto;
 }
 .chat-messages-container {
-  height: 71vh;
+  height: 68vh;
 }
 @media (max-height: 880px) {
   .chat-messages-container {
-    height: 70vh;
+    height: 67vh;
   }
 }
 .chat-room-title {
